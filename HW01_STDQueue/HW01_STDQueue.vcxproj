@@ -101,6 +101,7 @@
   <ItemGroup>
     <ClInclude Include="Alberto.h" />
     <ClInclude Include="Main.h" />
+    <ClInclude Include="TemplatedPriorityQueue.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\res\ICON.rc" />

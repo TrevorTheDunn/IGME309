@@ -1,4 +1,5 @@
 #include "Main.h"
+#include "TemplatedPriorityQueue.h"
 template <typename T> 
 void Print(std::deque<T> a_queue)
 {
@@ -14,6 +15,7 @@ void Print(std::deque<T> a_queue)
 
 int main(void)
 {
+	/*
 	std::deque<int> myQueue;
 	//Push elements
 	myQueue.push_back(0);
@@ -84,4 +86,65 @@ int main(void)
 
 	
 	getchar();
+	*/
+
+	std::cout << "--------TESTING DEFAULT CONSTRUCTOR, PUSH, SORT, POP, AND PRINT--------" << std::endl;
+	TPQ<int>* intQ1ptr = new TPQ<int>();
+	intQ1ptr->Push(1);
+	intQ1ptr->Push(2);
+	intQ1ptr->Push(3);
+	intQ1ptr->Push(4);
+	intQ1ptr->Push(5);
+	intQ1ptr->Push(6);
+	intQ1ptr->Pop();
+	intQ1ptr->Print();
+
+	std::cout << std::endl;
+	
+	std::cout << "--------TESTING COPY ASSIGNMENT OPERATOR--------" << std::endl;
+	TPQ<int>* intQ2ptr = new TPQ<int>();
+	intQ2ptr->Push(2);
+	intQ2ptr->Print();
+	*intQ1ptr = *intQ2ptr;
+	intQ1ptr->Print();
+
+	std::cout << std::endl;
+
+	std::cout << "--------TESTING COPY CONSTRUCTOR AND ISEMPTY--------" << std::endl;
+	TPQ<int>* intQ3ptr = new TPQ<int>(*intQ1ptr);
+	std::cout << "Is Queue 3 Empty? ";
+	if (intQ3ptr->IsEmpty())
+		std::cout << "YES" << std::endl;
+	else
+		std::cout << "NO" << std::endl;
+	intQ3ptr->Print();
+
+	std::cout << std::endl;
+
+	std::cout << "--------TESTING POP, GETSIZE, AND ISEMPTY--------" << std::endl;
+	intQ3ptr->Pop();
+	std::cout << "Queue 3 Length: " << intQ3ptr->GetSize() << std::endl;
+	std::cout << "Is Queue 3 Empty? ";
+	if (intQ3ptr->IsEmpty())
+		std::cout << "YES" << std::endl;
+	else
+		std::cout << "NO" << std::endl;
+	intQ3ptr->Print();
+
+	std::cout << std::endl;
+
+	std::cout << "--------TESTING DESTRUCTOR--------" << std::endl;
+	delete intQ1ptr;
+	intQ1ptr = nullptr;
+
+	delete intQ2ptr;
+	intQ2ptr = nullptr;
+
+	delete intQ3ptr;
+	intQ3ptr = nullptr;
+
+	_CrtDumpMemoryLeaks();
+
+	getchar();
+	return 0;
 }
