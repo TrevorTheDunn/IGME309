@@ -1,6 +1,6 @@
 #include "Main.h"
 #include "TemplatedPriorityQueue.h"
-template <typename T> 
+template <typename T>
 void Print(std::deque<T> a_queue)
 {
 	std::cout << "Begining of queue......." << std::endl;
@@ -84,7 +84,7 @@ int main(void)
 	std::cout << "Press Enter to finish." << std::endl;
 
 
-	
+
 	getchar();
 	*/
 
@@ -100,12 +100,18 @@ int main(void)
 	intQ1ptr->Print();
 
 	std::cout << std::endl;
-	
+
 	std::cout << "--------TESTING COPY ASSIGNMENT OPERATOR--------" << std::endl;
 	TPQ<int>* intQ2ptr = new TPQ<int>();
 	intQ2ptr->Push(2);
 	intQ2ptr->Print();
 	*intQ1ptr = *intQ2ptr;
+	intQ1ptr->Print();
+
+	std::cout << std::endl;
+
+	std::cout << "--------TESTING COPY ASSIGNMENT OPERATOR (AGAIN, SHOULD NOT CHANGE)--------" << std::endl;
+	*intQ1ptr = *intQ1ptr;
 	intQ1ptr->Print();
 
 	std::cout << std::endl;
@@ -142,6 +148,22 @@ int main(void)
 
 	delete intQ3ptr;
 	intQ3ptr = nullptr;
+
+	std::cout << std::endl;
+
+	std::cout << "--------TESTING TPQ W/ ALBERTO CLASS--------" << std::endl;
+	TPQ<AlbertoClass>* albertoQ = new TPQ<AlbertoClass>();
+	albertoQ->Push(AlbertoClass(22));
+	albertoQ->Push(AlbertoClass(55));
+	albertoQ->Push(AlbertoClass(20));
+	albertoQ->Push(AlbertoClass(40));
+	albertoQ->Print();
+
+	std::cout << std::endl;
+
+	std::cout << "--------TESTING DESTRUCTOR W/ ALBERTO CLASS--------" << std::endl;
+	delete albertoQ;
+	albertoQ = nullptr;
 
 	_CrtDumpMemoryLeaks();
 
