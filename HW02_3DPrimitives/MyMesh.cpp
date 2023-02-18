@@ -229,8 +229,46 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	//GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
 	// -------------------------------
+
+	std::vector<vector3> vertex;
+	GLfloat degree = 0;
+	GLfloat change = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisionsA));
+	float radius = (a_fOuterRadius + a_fInnerRadius) / 2;
+	for (int i = 0; i < a_nSubdivisionsA; i++)
+	{
+		vector3 temp = vector3(cos(degree) * a_fInnerRadius, sin(degree) * a_fInnerRadius, 0.0f);
+		degree += change;
+		vertex.push_back(temp);
+	}
+
+	GLfloat lamda = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisionsB));
+	std::vector<vector3> totalVertices;
+	for (int i = 0; i < a_nSubdivisionsA; i++)
+	{
+		matrix4 m4transform = IDENTITY_M4;
+		m4transform = glm::rotate(m4transform, lamda * i, vector3(0.0f, 1.0f, 0.0f));
+		m4transform = glm::translate(m4transform, vector3(a_fOuterRadius, 0.0f, 0.0f));
+		std::vector<vector3> vertexCopy;
+		vertexCopy = vertex;
+
+		for (int j = 0; j < a_nSubdivisionsB; j++)
+		{
+			vertexCopy[j] = m4transform * vector4(vertexCopy[j], 1.0f);
+			totalVertices.push_back(vertexCopy[j]);
+		}
+	}
+
+	int totalSize = totalVertices.size();
+	int divisions = a_nSubdivisionsB;
+	for (int i = 0; i < totalSize; i++)
+	{
+		AddQuad(totalVertices[i],
+				totalVertices[(i + divisions) % totalSize],
+				totalVertices[(i + 1) % totalSize],
+				totalVertices[(i + divisions + 1) % totalSize]);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
