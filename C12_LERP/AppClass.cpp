@@ -67,10 +67,22 @@ void Application::Display(void)
 	static bool bInit = false; //Initialize once
 	if (!bInit)
 	{
+		/*
 		v3Stop.push_back(vector3(-3, -0, 0));
 		v3Stop.push_back(vector3(3, -0, 0));
 		v3Stop.push_back(vector3(0, 2.5, 0));
-		v3Stop.push_back(vector3(0, -2.5, 0));
+		v3Stop.push_back(vector3(0, -2.5, 0));*/
+		v3Stop.push_back(vector3(-4.0f, -2.0f, 5.0f));
+		v3Stop.push_back(vector3(1.0f, -2.0f, 5.0f));
+		v3Stop.push_back(vector3(-3.0f, -1.0f, 3.0f));
+		v3Stop.push_back(vector3(2.0f, -1.0f, 3.0f));
+		v3Stop.push_back(vector3(-2.0f, 0.0f, 0.0f));
+		v3Stop.push_back(vector3(3.0f, 0.0f, 0.0f));
+		v3Stop.push_back(vector3(-1.0f, 1.0f, -3.0f));
+		v3Stop.push_back(vector3(4.0f, 1.0f, -3.0f));
+		v3Stop.push_back(vector3(0.0f, 2.0f, -5.0f));
+		v3Stop.push_back(vector3(5.0f, 2.0f, -5.0f));
+		v3Stop.push_back(vector3(1.0f, 3.0f, -5.0f));
 		bInit = true;
 	}
 
