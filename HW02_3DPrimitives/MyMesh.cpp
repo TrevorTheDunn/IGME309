@@ -279,8 +279,6 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	if (a_fRadius < 0.01f)
 		a_fRadius = 0.01f;
 
-	//a_nSubdivisions += 3;
-
 	//Sets minimum and maximum of subdivisions
 	if (a_nSubdivisions < 1)
 	{
@@ -299,16 +297,14 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 
 	std::vector<vector3> vertices;
 	int sDivisions = a_nSubdivisions;
-	int cDivisions = 8;
+	int cDivisions = 6;
 	GLfloat sDelta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(sDivisions));
 	GLfloat cDelta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(cDivisions));
 
 	for (int i = 0; i < sDivisions; i++)
 	{
-		//std::vector<vector3> vertices;
 		matrix4 m4Transform = IDENTITY_M4;
 		m4Transform = glm::rotate(m4Transform, sDelta * i, vector3(0.0f, 1.0f, 0.0f));
-		//m4Transform = glm::translate(m4Transform, ZERO_V3);
 
 		for (int j = 0; j < cDivisions; j++)
 		{
@@ -316,27 +312,15 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 			temp = m4Transform * vector4(temp, 1.0f);
 			vertices.push_back(temp);
 		}
-		/*
-		for (int j = 0; j < cDivisions; j++)
-		{
-			AddTri(ZERO_V3, vertices[j], vertices[(j + 1) % cDivisions]);
-		}*/
 	}
-
 	
 	int tVertices = vertices.size();
-	int hCDivisions = cDivisions / 2;
 	for (int i = 0; i < tVertices; i++)
 	{
-		/*AddQuad(vertices[i],
-			vertices[(i + 1) % tVertices],
-			vertices[(i + (cDivisions*2)) % tVertices],
-			vertices[(i + (cDivisions*2) - 1) % tVertices]);*/
-
 		AddQuad(vertices[i],
 			vertices[(i + cDivisions*2) % tVertices],
 			vertices[(i + 1) % tVertices],
-			vertices[(tVertices - i - 1) % tVertices]);
+			vertices[(i + cDivisions*2 + 1) % tVertices]);
 	}
 
 	// Adding information about color
