@@ -61,8 +61,29 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	//GenerateCube(a_fRadius * 2.0f, a_v3Color);
 	// -------------------------------
+
+	std::vector<vector3> vertices;
+	GLfloat degree = 0;
+	GLfloat change = static_cast<GLfloat>(PI * 2.0 / static_cast<GLfloat>(a_nSubdivisions));
+	float h = a_fHeight / 2;
+
+	vector3 tipVector = vector3(0.0f, 0.0f, h);
+	vector3 centerVector = vector3(0.0f, 0.0f, h * -1.0f);
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 newVertex = vector3(cos(degree) * a_fRadius, sin(degree) * a_fRadius, h * -1.0f);
+		degree += change;
+		vertices.push_back(newVertex);
+	}
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddTri(centerVector, vertices[(i + 1) % a_nSubdivisions], vertices[i]);
+		AddTri(vertices[i], vertices[(i + 1) % a_nSubdivisions], tipVector);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -85,8 +106,33 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	//GenerateCube(a_fRadius * 2.0f, a_v3Color);
 	// -------------------------------
+
+	std::vector<vector3> verticesUpper;
+	std::vector<vector3> verticesLower;
+	GLfloat degree = 0;
+	GLfloat change = static_cast<GLfloat>(PI * 2.0 / static_cast<GLfloat>(a_nSubdivisions));
+	float h = a_fHeight / 2;
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 newVecUpper = vector3(cos(degree) * a_fRadius, sin(degree) * a_fRadius, h);
+		vector3 newVecLower = vector3(cos(degree) * a_fRadius, sin(degree) * a_fRadius, h * -1.0f);
+		degree += change;
+		verticesUpper.push_back(newVecUpper);
+		verticesLower.push_back(newVecLower);
+	}
+
+	vector3 upperCenter = vector3(0.0f, 0.0f, h);
+	vector3 lowerCenter = vector3(0.0f, 0.0f, h * -1.0f);
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddTri(upperCenter, verticesUpper[i], verticesUpper[(i + 1) % a_nSubdivisions]);
+		AddTri(verticesLower[i], lowerCenter, verticesLower[(i + 1) % a_nSubdivisions]);
+		AddQuad(verticesLower[i], verticesLower[(i + 1) % a_nSubdivisions], verticesUpper[i], verticesUpper[(i + 1) % a_nSubdivisions]);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -115,8 +161,44 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	//GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
 	// -------------------------------
+
+	std::vector<vector3> outerVerticesUpper;
+	std::vector<vector3> outerVerticesLower;
+	std::vector<vector3> innerVerticesUpper;
+	std::vector<vector3> innerVerticesLower;
+	GLfloat degree = 0;
+	GLfloat change = static_cast<GLfloat>(PI * 2.0 / static_cast<GLfloat>(a_nSubdivisions));
+	float h = a_fHeight / 2;
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 newVecLower = vector3(cos(degree) * a_fOuterRadius, sin(degree) * a_fOuterRadius, h * -1.0f);
+		vector3 newVecUpper = vector3(cos(degree) * a_fOuterRadius, sin(degree) * a_fOuterRadius, h);
+		degree += change;
+		outerVerticesLower.push_back(newVecLower);
+		outerVerticesUpper.push_back(newVecUpper);
+	}
+
+	degree = 0;
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		vector3 newVecLower = vector3(cos(degree) * a_fInnerRadius, sin(degree) * a_fInnerRadius, h * -1.0f);
+		vector3 newVecUpper = vector3(cos(degree) * a_fInnerRadius, sin(degree) * a_fInnerRadius, h);
+		degree += change;
+		innerVerticesLower.push_back(newVecLower);
+		innerVerticesUpper.push_back(newVecUpper);
+	}
+
+	for (int i = 0; i < a_nSubdivisions; i++)
+	{
+		AddQuad(innerVerticesUpper[(i + 1) % a_nSubdivisions], innerVerticesUpper[i], outerVerticesUpper[(i + 1) % a_nSubdivisions], outerVerticesUpper[i]);
+		AddQuad(innerVerticesLower[i], innerVerticesLower[(i + 1) % a_nSubdivisions], outerVerticesLower[i], outerVerticesLower[(i + 1) % a_nSubdivisions]);
+		AddQuad(outerVerticesLower[i], outerVerticesLower[(i + 1) % a_nSubdivisions], outerVerticesUpper[i], outerVerticesUpper[(i + 1) % a_nSubdivisions]);
+		AddQuad(innerVerticesLower[(i + 1) % a_nSubdivisions], innerVerticesLower[i], innerVerticesUpper[(i + 1) % a_nSubdivisions], innerVerticesUpper[i]);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -147,8 +229,46 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	//GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
 	// -------------------------------
+
+	std::vector<vector3> vertex;
+	GLfloat degree = 0;
+	GLfloat change = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisionsA));
+	float radius = (a_fOuterRadius + a_fInnerRadius) / 2;
+	for (int i = 0; i < a_nSubdivisionsA; i++)
+	{
+		vector3 temp = vector3(cos(degree) * a_fInnerRadius, sin(degree) * a_fInnerRadius, 0.0f);
+		degree += change;
+		vertex.push_back(temp);
+	}
+
+	GLfloat lamda = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisionsB));
+	std::vector<vector3> totalVertices;
+	for (int i = 0; i < a_nSubdivisionsA; i++)
+	{
+		matrix4 m4transform = IDENTITY_M4;
+		m4transform = glm::rotate(m4transform, lamda * i, vector3(0.0f, 1.0f, 0.0f));
+		m4transform = glm::translate(m4transform, vector3(a_fOuterRadius, 0.0f, 0.0f));
+		std::vector<vector3> vertexCopy;
+		vertexCopy = vertex;
+
+		for (int j = 0; j < a_nSubdivisionsB; j++)
+		{
+			vertexCopy[j] = m4transform * vector4(vertexCopy[j], 1.0f);
+			totalVertices.push_back(vertexCopy[j]);
+		}
+	}
+
+	int totalSize = totalVertices.size();
+	int divisions = a_nSubdivisionsB;
+	for (int i = 0; i < totalSize; i++)
+	{
+		AddQuad(totalVertices[i],
+				totalVertices[(i + divisions) % totalSize],
+				totalVertices[(i + 1) % totalSize],
+				totalVertices[(i + divisions + 1) % totalSize]);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -172,8 +292,36 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	//GenerateCube(a_fRadius * 2.0f, a_v3Color);
 	// -------------------------------
+
+	std::vector<vector3> vertices;
+	int sDivisions = a_nSubdivisions;
+	int cDivisions = 6;
+	GLfloat sDelta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(sDivisions));
+	GLfloat cDelta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(cDivisions));
+
+	for (int i = 0; i < sDivisions; i++)
+	{
+		matrix4 m4Transform = IDENTITY_M4;
+		m4Transform = glm::rotate(m4Transform, sDelta * i, vector3(0.0f, 1.0f, 0.0f));
+
+		for (int j = 0; j < cDivisions; j++)
+		{
+			vector3 temp = vector3(cos(cDelta * j) * a_fRadius, sin(cDelta * j) * a_fRadius, 0.0f);
+			temp = m4Transform * vector4(temp, 1.0f);
+			vertices.push_back(temp);
+		}
+	}
+	
+	int tVertices = vertices.size();
+	for (int i = 0; i < tVertices; i++)
+	{
+		AddQuad(vertices[i],
+			vertices[(i + cDivisions*2) % tVertices],
+			vertices[(i + 1) % tVertices],
+			vertices[(i + cDivisions*2 + 1) % tVertices]);
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
