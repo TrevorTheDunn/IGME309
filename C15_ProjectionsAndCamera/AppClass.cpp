@@ -53,8 +53,8 @@ void Application::Display(void)
 
 	//Camera position
 	static float fPos = 0.0f;
-	m_pCamera->SetPosition(vector3(fPos, 0.0f, 10.0f));
-	m_pCamera->SetTarget(vector3(fPos, 0.0f, 9.0f));
+	m_pCamera->SetPosition(vector3(0.0f, 0.0f, 10.0f + fPos));
+	m_pCamera->SetTarget(vector3(0.0f, 0.0f, 0.0f + fPos));
 	fPos -= 0.01f;
 	/* 
 	Steve is in the dll's Camera class space, while the other primitives
