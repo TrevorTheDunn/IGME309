@@ -19,8 +19,8 @@ using namespace BTX;
 class Application
 {
 	matrix4 m_m4Model = IDENTITY_M4;
-	quaternion m_qOrientation;
 	vector3 m_v3Rotation;
+	quaternion m_qOrientation;
 	String m_sSteve = "Minecraft\\Steve.obj";
 private:
 	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu";

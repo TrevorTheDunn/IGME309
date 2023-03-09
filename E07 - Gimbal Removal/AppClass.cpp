@@ -34,22 +34,19 @@ void Application::Display(void)
 	matrix4 m4View = m_pCameraMngr->GetViewMatrix();
 	matrix4 m4Projection = m_pCameraMngr->GetProjectionMatrix();
 
-	//m_m4Model = glm::rotate(IDENTITY_M4, glm::radians(m_v3Rotation.x), vector3(1.0f, 0.0f, 0.0f));
-	//m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.y), vector3(0.0f, 1.0f, 0.0f));
-	//m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.z), vector3(0.0f, 0.0f, 1.0f));
+	m_m4Model = glm::rotate(IDENTITY_M4, glm::radians(m_v3Rotation.x), vector3(1.0f, 0.0f, 0.0f));
+	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.y), vector3(0.0f, 1.0f, 0.0f));
+	m_m4Model = glm::rotate(m_m4Model, glm::radians(m_v3Rotation.z), vector3(0.0f, 0.0f, 1.0f));
+	m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(m_v3Rotation.x), AXIS_X);
+	m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(m_v3Rotation.y), AXIS_Y);
+	m_qOrientation = m_qOrientation * glm::angleAxis(glm::radians(m_v3Rotation.z), AXIS_Z);
+
 	/*
 	* The following line was replaced by the model manager so we can see a model instead of a cone
 	*/
 
-	vector3 euler = vector3(m_v3Rotation.x, m_v3Rotation.y, m_v3Rotation.z);
-	m_qOrientation.x = euler.x;
-	m_qOrientation.y = euler.y;
-	m_qOrientation.z = euler.z;
-
 	//m_pMesh->Render(m4Projection, m4View, ToMatrix4(m_m4Model));
-	m_pModelMngr->AddModelToRenderList(m_sSteve, m_m4Model);
-
-	m_m4Model = glm::toMat4(m_qOrientation);
+	m_pModelMngr->AddModelToRenderList(m_sSteve, ToMatrix4(m_qOrientation));
 
 	// draw a skybox
 	m_pModelMngr->AddSkyboxToRenderList();
