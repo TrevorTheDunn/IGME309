@@ -187,7 +187,7 @@ public:
 	ARGUMENTS: ---
 	OUTPUT: ---
 	*/
-	void CalculateProjectionMatrix(void);
+	void CalculateProjectionMatrix(int width, int height);
 
 };
 
