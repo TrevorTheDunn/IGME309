@@ -79,7 +79,14 @@ MyRigidBody::MyRigidBody(std::vector<vector3> a_pointList)
 	m_v3Center = a_pointList[0];
 	for (uint i = 1; i < uCount; i++)
 	{
-		
+		if (m_v3MaxL.x < a_pointList[i].x) m_v3MaxL.x = a_pointList[i].x;
+		else if (m_v3MinL.x > a_pointList[i].x) m_v3MinL.x = a_pointList[i].x;
+
+		if (m_v3MaxL.y < a_pointList[i].y) m_v3MaxL.y = a_pointList[i].y;
+		else if (m_v3MinL.y > a_pointList[i].y) m_v3MinL.y = a_pointList[i].y;
+
+		if (m_v3MaxL.z < a_pointList[i].z) m_v3MaxL.z = a_pointList[i].z;
+		else if (m_v3MinL.z > a_pointList[i].z) m_v3MinL.z = a_pointList[i].z;
 	}
 	m_v3Center = (m_v3MaxL + m_v3MinL) / 2.0f;
 
@@ -90,6 +97,8 @@ MyRigidBody::MyRigidBody(std::vector<vector3> a_pointList)
 		if (m_fRadius < fDistance)
 			m_fRadius = fDistance;
 	}
+	m_fRadius = glm::distance(m_v3Center, m_v3MaxL); //Bouding Sphere of bounding box
+	m_v3HalfWidth = (m_v3MaxL - m_v3MinL) / 2.0f; //this'll be important for HW4
 }
 MyRigidBody::MyRigidBody(MyRigidBody const& other)
 {
@@ -125,15 +134,65 @@ MyRigidBody& MyRigidBody::operator=(MyRigidBody const& other)
 MyRigidBody::~MyRigidBody(){Release();};
 
 //--- Non Standard Singleton Methods
+vector3 MyRigidBody::GlobalizeVector(vector3 input)
+{
+	input = glm::rotate(quaternion(), input);
+	return m_m4ToWorld * vector4(input, 1.0f);
+}
+
 void MyRigidBody::AddToRenderList(void)
 {
 	if (!m_bVisible)
 		return;
+	//for the sphere
 	matrix4 m4Transform = glm::translate(vector3(m_v3Center));
 	m4Transform = m4Transform * glm::scale(vector3(m_fRadius));
-	m_pMeshMngr->AddWireSphereToRenderList(IDENTITY_M4, m_v3Color);
+	//m_pMeshMngr->AddWireSphereToRenderList(m4Transform, m_v3Color);
+
+	//for the box
+	m4Transform = m_m4ToWorld * glm::translate(vector3(m_v3Center));
+	m4Transform = m4Transform * glm::scale(m_v3HalfWidth * 2.0f); //this'll be important for HW4
+	m_pMeshMngr->AddWireCubeToRenderList(m4Transform, m_v3Color);
 }
 bool MyRigidBody::IsColliding(MyRigidBody* const other)
 {
-	return false;
+	bool bColliding = true;
+
+	//if the sum of the radii is > distance of their centers
+	vector3 v3ThisCenterG = this->GlobalizeVector(this->m_v3Center);
+	vector3 v3OtherCenterG = this->GlobalizeVector(other->m_v3Center);
+	float fDistance = glm::distance(v3ThisCenterG, v3OtherCenterG);
+	float fRadiiSum = this->m_fRadius + other->m_fRadius; //don't need to globalize radii unless you were scaling
+	bColliding = fRadiiSum > fDistance;
+
+	this->m_v3MinG = this->GlobalizeVector(this->m_v3MinL);
+	this->m_v3MaxG = this->GlobalizeVector(this->m_v3MaxL);
+
+	other->m_v3MinG = this->GlobalizeVector(other->m_v3MinL);
+	other->m_v3MaxG = this->GlobalizeVector(other->m_v3MaxL);
+
+	bColliding = true;
+
+	if (m_v3MinG.x > other->m_v3MaxG.x)
+		bColliding = false;
+	if (m_v3MaxG.x < other->m_v3MinG.x)
+		bColliding = false;
+
+	if (m_v3MinG.y > other->m_v3MaxG.y)
+		bColliding = false;
+	if (m_v3MaxG.y < other->m_v3MinG.y)
+		bColliding = false;
+
+	if (m_v3MinG.z > other->m_v3MaxG.z)
+		bColliding = false;
+	if (m_v3MaxG.z < other->m_v3MinG.z)
+		bColliding = false;
+
+	if (bColliding)
+	{
+		this->m_v3Color = vector3(1.0f, 0.0f, 0.0f);
+		other->m_v3Color = C_RED;
+	}
+
+	return bColliding;
 }
