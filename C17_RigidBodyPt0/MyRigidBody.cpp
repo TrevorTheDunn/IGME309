@@ -13,7 +13,34 @@ vector3 MyRigidBody::GetMinGlobal(void) { return m_v3MinG; }
 vector3 MyRigidBody::GetMaxGlobal(void) { return m_v3MaxG; }
 vector3 MyRigidBody::GetHalfWidth(void) { return m_v3HalfWidth; }
 matrix4 MyRigidBody::GetModelMatrix(void) { return m_m4ToWorld; }
-void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix) { m_m4ToWorld = a_m4ModelMatrix; }
+vector3 makeGlobal(matrix4 m4ToWorld, vector3 input) { return m4ToWorld * vector4(input, 1.0f); }
+void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix) 
+{ 
+	if (m_m4ToWorld == a_m4ModelMatrix)
+		return;
+
+	m_m4ToWorld = a_m4ModelMatrix; 
+	//Generate all 8 corners of the ARBB
+	std::vector<vector3> cornerList;
+	cornerList.push_back(vector3(m_v3MinL.x, m_v3MinL.y, m_v3MinL.z)); //000
+	cornerList.push_back(vector3(m_v3MinL.x, m_v3MinL.y, m_v3MaxL.z)); //001
+	cornerList.push_back(vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MinL.z)); //010
+	cornerList.push_back(vector3(m_v3MinL.x, m_v3MaxL.y, m_v3MaxL.z)); //011
+
+	cornerList.push_back(vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MinL.z)); //100
+	cornerList.push_back(vector3(m_v3MaxL.x, m_v3MinL.y, m_v3MaxL.z)); //101
+	cornerList.push_back(vector3(m_v3MaxL.x, m_v3MaxL.y, m_v3MinL.z)); //110
+	cornerList.push_back(vector3(m_v3MaxL.x, m_v3MaxL.y, m_v3MaxL.z)); //111
+	//Globalize them
+	for (uint i = 0; i < 8; i++)
+	{
+		cornerList[i] = makeGlobal(m_m4ToWorld, cornerList[i]);
+	}
+	//make a new box around them
+	MyRigidBody oTemp(cornerList);
+	m_v3MinG = oTemp.m_v3MinG;
+	m_v3MaxG = oTemp.m_v3MaxG;
+}
 //Allocation
 void MyRigidBody::Init(void)
 {
@@ -88,6 +115,11 @@ MyRigidBody::MyRigidBody(std::vector<vector3> a_pointList)
 		if (m_v3MaxL.z < a_pointList[i].z) m_v3MaxL.z = a_pointList[i].z;
 		else if (m_v3MinL.z > a_pointList[i].z) m_v3MinL.z = a_pointList[i].z;
 	}
+
+	//with model matrix being the identity, local and global are the same
+	m_v3MinG = m_v3MinL;
+	m_v3MaxG = m_v3MaxL;
+
 	m_v3Center = (m_v3MaxL + m_v3MinL) / 2.0f;
 
 	m_fRadius = 0.0f;
@@ -153,6 +185,10 @@ void MyRigidBody::AddToRenderList(void)
 	m4Transform = m_m4ToWorld * glm::translate(vector3(m_v3Center));
 	m4Transform = m4Transform * glm::scale(m_v3HalfWidth * 2.0f); //this'll be important for HW4
 	m_pMeshMngr->AddWireCubeToRenderList(m4Transform, m_v3Color);
+
+	vector3 v3ARBBSize = m_v3MaxG - m_v3MinG;
+	m_pMeshMngr->AddWireCubeToRenderList(
+		glm::translate(makeGlobal(m_m4ToWorld, m_v3Center)) * glm::scale(v3ARBBSize), C_YELLOW);
 }
 bool MyRigidBody::IsColliding(MyRigidBody* const other)
 {
