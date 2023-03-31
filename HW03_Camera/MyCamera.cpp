@@ -56,11 +56,11 @@ void MyCamera::CalculateView(void)
 
 	quaternion rotation = quaternion(glm::radians(m_v3PitchYawRoll));
 
-	vector3 rightVec = vector3(1.0f, 0.0f, 0.0f); //calculate new rightward vector
-	this->SetRightward(rightVec); //update rightward vector
-
 	vector3 forwardVec = m_v3Forward; //calculate new forward vector
 	this->SetForward(forwardVec); //update forward vector
+
+	vector3 rightVec = vector3(1.0f, 0.0f, 0.0f); //calculate new rightward vector
+	this->SetRightward(rightVec); //update rightward vector
 
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
 }
