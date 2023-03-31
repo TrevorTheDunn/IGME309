@@ -7,9 +7,15 @@ void MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3 a_v3Targ
 	//Tip: Changing any positional vector forces you to calculate new directional ones
 	//super::SetPositionTargetAndUpward(a_v3Position, a_v3Target, a_v3Upward);
 
-	this->m_v3Position = a_v3Position;
-	this->m_v3Target = a_v3Target;
+	m_v3Position = a_v3Position;
+	m_v3Target = a_v3Target;
 	this->SetUpward(a_v3Upward); //upward will always point globally up
+
+	vector3 forwardVec = m_v3Forward; //calculate new forward vector
+	this->SetForward(forwardVec); //update forward vector
+
+	vector3 rightVec = vector3(1.0f, 0.0f, 0.0f); //calculate new rightward vector
+	this->SetRightward(rightVec); //update rightward vector
 
 	//After changing any vectors you need to recalculate the MyCamera View matrix.
 	//While this is executed within the parent call above, when you remove that line
@@ -54,15 +60,13 @@ void MyCamera::CalculateView(void)
 	//		 have change so you only need to focus on the directional and positional 
 	//		 vectors. There is no need to calculate any right click process or connections.
 
-	quaternion rotation = quaternion(glm::radians(m_v3PitchYawRoll));
-
-	vector3 forwardVec = m_v3Forward; //calculate new forward vector
-	this->SetForward(forwardVec); //update forward vector
-
-	vector3 rightVec = vector3(1.0f, 0.0f, 0.0f); //calculate new rightward vector
-	this->SetRightward(rightVec); //update rightward vector
+	quaternion m_qRot = IDENTITY_QUAT;
+	m_qRot = m_qRot * glm::angleAxis(-m_v3PitchYawRoll.x, AXIS_X);
+	m_qRot = m_qRot * glm::angleAxis(-m_v3PitchYawRoll.y, AXIS_Y);
+	matrix4 m_m4Rot = glm::toMat4(m_qRot);
 
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
+	m_m4View *= m_m4Rot;
 }
 //You can assume that the code below does not need changes unless you expand the functionality
 //of the class or create helper methods, etc.
