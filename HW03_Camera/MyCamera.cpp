@@ -5,7 +5,17 @@ void MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3 a_v3Targ
 {
 	//TODO:: replace the super call with your functionality
 	//Tip: Changing any positional vector forces you to calculate new directional ones
-	super::SetPositionTargetAndUpward(a_v3Position, a_v3Target, a_v3Upward);
+	//super::SetPositionTargetAndUpward(a_v3Position, a_v3Target, a_v3Upward);
+
+	m_v3Position = a_v3Position;
+	m_v3Target = a_v3Target;
+	this->SetUpward(a_v3Upward); //upward will always point globally up
+
+	vector3 rightVec = vector3(1.0f, 0.0f, 0.0f); //calculate new rightward vector
+	this->SetRightward(rightVec); //update rightward vector
+
+	vector3 forwardVec = m_v3Forward; //calculate new forward vector
+	this->SetForward(forwardVec); //update forward vector
 
 	//After changing any vectors you need to recalculate the MyCamera View matrix.
 	//While this is executed within the parent call above, when you remove that line
@@ -38,8 +48,8 @@ void MyCamera::MoveSideways(float a_fDistance)
 {
 	//Tip:: Look at MoveForward
 
-	m_v3Position += vector3(1.0f, 0.0f, 0.0f) * a_fDistance;
-	m_v3Target += vector3(1.0f, 0.0f, 0.0f) * a_fDistance;
+	m_v3Position += m_v3Rightward * a_fDistance;
+	m_v3Target += m_v3Rightward * a_fDistance;
 }
 void MyCamera::CalculateView(void)
 {
@@ -49,7 +59,13 @@ void MyCamera::CalculateView(void)
 	//		 it will receive information from the main code on how much these orientations
 	//		 have change so you only need to focus on the directional and positional 
 	//		 vectors. There is no need to calculate any right click process or connections.
+
+	quaternion rotation = quaternion(1.0f, glm::radians(m_v3PitchYawRoll.x), glm::radians(m_v3PitchYawRoll.y), glm::radians(m_v3PitchYawRoll.z));
+	//m_v3Position = glm::rotate(rotation, m_v3Position);
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
+	quaternion m_qView = glm::toQuat(m_m4View);
+	m_qView += rotation;
+	m_m4View = glm::toMat4(m_qView);
 }
 //You can assume that the code below does not need changes unless you expand the functionality
 //of the class or create helper methods, etc.
