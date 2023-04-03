@@ -9,13 +9,7 @@ void MyCamera::SetPositionTargetAndUpward(vector3 a_v3Position, vector3 a_v3Targ
 
 	m_v3Position = a_v3Position;
 	m_v3Target = a_v3Target;
-	this->SetUpward(a_v3Upward); //upward will always point globally up
-
-	vector3 forwardVec = m_v3Forward; //calculate new forward vector
-	this->SetForward(forwardVec); //update forward vector
-
-	vector3 rightVec = vector3(1.0f, 0.0f, 0.0f); //calculate new rightward vector
-	this->SetRightward(rightVec); //update rightward vector
+	m_v3Upward = a_v3Upward;
 
 	//After changing any vectors you need to recalculate the MyCamera View matrix.
 	//While this is executed within the parent call above, when you remove that line
@@ -60,13 +54,25 @@ void MyCamera::CalculateView(void)
 	//		 have change so you only need to focus on the directional and positional 
 	//		 vectors. There is no need to calculate any right click process or connections.
 
-	quaternion m_qRot = IDENTITY_QUAT;
-	m_qRot = m_qRot * glm::angleAxis(-m_v3PitchYawRoll.x, AXIS_X);
-	m_qRot = m_qRot * glm::angleAxis(-m_v3PitchYawRoll.y, AXIS_Y);
-	matrix4 m_m4Rot = glm::toMat4(m_qRot);
+	quaternion m_qRot = IDENTITY_QUAT; //create an identity quaternion and fill the x, y, and z with pitchyawroll values
+	m_qRot = m_qRot * glm::angleAxis(glm::radians(m_v3PitchYawRoll.x), AXIS_X);
+	m_qRot = m_qRot * glm::angleAxis(glm::radians(m_v3PitchYawRoll.y), AXIS_Y);
+	m_qRot = m_qRot * glm::angleAxis(glm::radians(m_v3PitchYawRoll.z), AXIS_Z);
+
+	//I used the distance formula and trig math to move the target based upon the rotations stored in the quat to change the camera's rotation
+	//Idk if this is the way I was supposed to do it, but it is the only way I could get to work after trying many different things
+	
+	float distance = glm::distance(m_v3Position, m_v3Target); //determine the distance between the position and the target
+	m_v3Target.y += glm::tan(m_qRot.x) * distance; //multiply distance by the tangent of the rotation around the x axis to get the change in y
+	m_v3Target.x += glm::tan(m_qRot.y) * -distance; //multiply negative distance (otherwise left and right are inverted) by the tan of the rotation around the y axis to get the change in x
+
+	m_v3Rightward = m_v3Rightward * glm::angleAxis(-m_qRot.y, AXIS_Y);
+	m_v3Forward = m_v3Forward * glm::angleAxis(-m_qRot.x, AXIS_X);
+	m_v3Forward = m_v3Forward * glm::angleAxis(-m_qRot.y, AXIS_Y);
+
+	m_v3PitchYawRoll = ZERO_V3; //reset pitch yaw and roll to 0
 
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
-	m_m4View *= m_m4Rot;
 }
 //You can assume that the code below does not need changes unless you expand the functionality
 //of the class or create helper methods, etc.
