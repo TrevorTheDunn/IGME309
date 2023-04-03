@@ -66,7 +66,10 @@ void MyCamera::CalculateView(void)
 	m_v3Target.y += glm::tan(m_qRot.x) * distance; //multiply distance by the tangent of the rotation around the x axis to get the change in y
 	m_v3Target.x += glm::tan(m_qRot.y) * -distance; //multiply negative distance (otherwise left and right are inverted) by the tan of the rotation around the y axis to get the change in x
 
+	//realigns the y axis for the rightward vector
 	m_v3Rightward = m_v3Rightward * glm::angleAxis(-m_qRot.y, AXIS_Y);
+
+	//realigns the x and y axis for the forward vector
 	m_v3Forward = m_v3Forward * glm::angleAxis(-m_qRot.x, AXIS_X);
 	m_v3Forward = m_v3Forward * glm::angleAxis(-m_qRot.y, AXIS_Y);
 
