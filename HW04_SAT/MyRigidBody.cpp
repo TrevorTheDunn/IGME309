@@ -6,6 +6,89 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	//TODO: Calculate the SAT algorithm I STRONGLY suggest you use the
 	//Real Time Collision detection algorithm for OBB here but feel free to
 	//implement your own solution.
+
+	float m_fThisRadius, m_fOtherRadius; //projected radius of both objects
+	matrix3 R, AbsR;
+
+	//u[3] = local x, y, z axes
+	//e = halfwidth
+
+	//Compute rotation matrix expressing b in a's coordinat frame
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			R[i][j] = glm::dot(a.u[i], b.u[j]);
+
+	//Compute translation vector t (b center - a center)
+	vector3 t = a_pOther->m_v3Center - this->m_v3Center;
+	//Bring translation into a's coordinate frame
+	t = vector3(glm::dot(t, a.u[0]), glm::dot(t, a.u[2]), glm::dot(t, a.u[2]));
+
+	//Compute common subexpressions. Add in an epsilon term to
+	//counteract arithmetic errors when two edges are parallel and
+	//their cross product is (near) null
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			AbsR[i][j] = glm::abs(R[i][j]) + EPSILON;
+
+	//Test axes L = A0, L = A1, L = A2
+	for (int i = 0; i < 3; i++) {
+		m_fThisRadius = this->m_v3HalfWidth[i];
+		m_fOtherRadius = a_pOther->m_v3HalfWidth[0] * AbsR[i][0] + a_pOther->m_v3HalfWidth[1] * AbsR[i][1] + a_pOther->m_v3HalfWidth[2] * AbsR[i][2];
+		if (glm::abs(t[i]) > m_fThisRadius + m_fOtherRadius) return 0;
+	}
+
+	//Test axes L = B0, L = B1, L = B2
+	for (int i = 0; i < 3; i++) {
+		m_fThisRadius = this->m_v3HalfWidth[0] * AbsR[0][i] + this->m_v3HalfWidth[1] * AbsR[1][i] + this->m_v3HalfWidth[2] * AbsR[2][i];
+		m_fOtherRadius = a_pOther->m_v3HalfWidth[1];
+		if (glm::abs(t[0] * R[0][i] + t[1] * R[1][i] + t[2] * R[2][i]) > m_fThisRadius + m_fOtherRadius) return 0;
+	}
+
+	//Test axis L = A0 x B0
+	m_fThisRadius = this->m_v3HalfWidth[1] * AbsR[2][0] + this->m_v3HalfWidth[2] * AbsR[1][0];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[1] * AbsR[0][2] + a_pOther->m_v3HalfWidth[2] * AbsR[0][1];
+	if (glm::abs(t[2] * R[1][0] - t[1] * R[2][0]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A0 x B1
+	m_fThisRadius = this->m_v3HalfWidth[1] * AbsR[2][1] + this->m_v3HalfWidth[2] * AbsR[1][1];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[0] * AbsR[0][2] + a_pOther->m_v3HalfWidth[2] * AbsR[0][0];
+	if (glm::abs(t[2] * R[1][1] - t[1] * R[2][1]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A0 x B2
+	m_fThisRadius = this->m_v3HalfWidth[1] * AbsR[2][2] + this->m_v3HalfWidth[2] * AbsR[1][2];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[0] * AbsR[0][1] + a_pOther->m_v3HalfWidth[1] * AbsR[0][0];
+	if (glm::abs(t[2] * R[1][2] - t[1] * R[2][2]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A1 x B0
+	m_fThisRadius = this->m_v3HalfWidth[0] * AbsR[2][0] + this->m_v3HalfWidth[2] * AbsR[0][0];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[1] * AbsR[1][2] + a_pOther->m_v3HalfWidth[2] * AbsR[1][1];
+	if (glm::abs(t[0] * R[2][0] - t[2] * R[0][0]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A1 x B1
+	m_fThisRadius = this->m_v3HalfWidth[0] * AbsR[2][1] + this->m_v3HalfWidth[2] * AbsR[0][1];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[0] * AbsR[1][2] + a_pOther->m_v3HalfWidth[2] * AbsR[1][0];
+	if (glm::abs(t[0] * R[2][1] - t[2] * R[0][1]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A1 x B2
+	m_fThisRadius = this->m_v3HalfWidth[0] * AbsR[2][2] + this->m_v3HalfWidth[2] * AbsR[0][2];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[0] * AbsR[1][1] + a_pOther->m_v3HalfWidth[1] * AbsR[1][0];
+	if (glm::abs(t[0] * R[2][2] - t[2] * R[0][2]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A2 x B0
+	m_fThisRadius = this->m_v3HalfWidth[0] * AbsR[1][0] + this->m_v3HalfWidth[1] * AbsR[0][0];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[1] * AbsR[2][2] + a_pOther->m_v3HalfWidth[2] * AbsR[2][1];
+	if (glm::abs(t[1] * R[0][0] - t[0] * R[1][0]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A2 x B1
+	m_fThisRadius = this->m_v3HalfWidth[0] * AbsR[1][1] + this->m_v3HalfWidth[1] * AbsR[0][1];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[0] * AbsR[2][2] + a_pOther->m_v3HalfWidth[2] * AbsR[2][0];
+	if (glm::abs(t[1] * R[0][1] - t[0] * R[1][1]) > m_fThisRadius + m_fOtherRadius) return 0;
+
+	//Test axis L = A2 x B2
+	m_fThisRadius = this->m_v3HalfWidth[0] * AbsR[1][2] + this->m_v3HalfWidth[1] * AbsR[0][2];
+	m_fOtherRadius = a_pOther->m_v3HalfWidth[0] * AbsR[2][1] + a_pOther->m_v3HalfWidth[1] * AbsR[2][0];
+	if (glm::abs(t[1] * R[0][2] - t[0] * R[1][2]) > m_fThisRadius + m_fOtherRadius) return 0;
+
 	return BTXs::eSATResults::SAT_NONE;
 }
 bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
