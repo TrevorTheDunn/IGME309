@@ -39,7 +39,7 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	//Compute common subexpressions
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
-			absR[i][j] = glm::abs(r[i][j]);
+			absR[i][j] = glm::abs(r[i][j]) + FLT_EPSILON;
 
 	//Test axes L = A0, L = A1, L = A2
 	for (int i = 0; i < 3; i++) {
