@@ -28,6 +28,9 @@ Octant::Octant(uint a_nMaxLevel, uint a_nIdealEntityCount)
 	std::vector<vector3> lMinMax;
 	lMinMax.push_back(vector3(-50.0f));
 	lMinMax.push_back(vector3(25.0f));
+
+
+	
 	RigidBody pRigidBody = RigidBody(lMinMax);
 
 
