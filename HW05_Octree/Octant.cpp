@@ -26,13 +26,32 @@ Octant::Octant(uint a_nMaxLevel, uint a_nIdealEntityCount)
 
 	//The following is a made-up size, you need to make sure it is measuring all the object boxes in the world
 	std::vector<vector3> lMinMax;
-	lMinMax.push_back(vector3(-50.0f));
-	lMinMax.push_back(vector3(25.0f));
 
+	//loops through all entities
+	for (uint i = 0; i < m_pEntityMngr->GetEntityCount(); i++)
+	{
+		//Gets the entity at i
+		Entity* pEntity = nullptr;
+		pEntity = m_pEntityMngr->GetEntity(i);
+		
+		//gets the rigid body of the entity (if the entity exists)
+		RigidBody* pRB = nullptr;
+		if (pEntity)
+			pRB = pEntity->GetRigidBody();
 
+		//if the rigid body exists, gets the min and max of the RB and pushes them onto the minMax vector
+		if (pRB)
+		{
+			vector3 min = pRB->GetMinGlobal();
+			vector3 max = pRB->GetMaxGlobal();
+
+			lMinMax.push_back(min);
+			lMinMax.push_back(max);
+		}
+	}
 	
+	//constructs rigid body from minMax vector to get below variables
 	RigidBody pRigidBody = RigidBody(lMinMax);
-
 
 	//The following will set up the values of the octant, make sure the are right, the rigid body at start
 	//is NOT fine, it has made-up values
@@ -41,6 +60,9 @@ Octant::Octant(uint a_nMaxLevel, uint a_nIdealEntityCount)
 	m_v3Min = m_v3Center - pRigidBody.GetHalfWidth();
 	m_v3Max = m_v3Center + pRigidBody.GetHalfWidth();
 
+	//clears minMax vector
+	lMinMax.clear();
+
 	m_uOctantCount++; //When we add an octant we increment the count
 	ConstructTree(m_uMaxLevel); //Construct the children
 }
@@ -48,19 +70,76 @@ Octant::Octant(uint a_nMaxLevel, uint a_nIdealEntityCount)
 bool Octant::IsColliding(uint a_uRBIndex)
 {
 	//Get how many objects there are in the world
+	uint totalEnt = m_pEntityMngr->GetEntityCount();
+
 	//If the index given is larger than the number of elements in the bounding object there is no collision
+	if (a_uRBIndex > totalEnt) return false;
+
 	//As the Octree will never rotate or scale this collision is as easy as an Axis Alligned Bounding Box
 	//Get all vectors in global space (the octant ones are already in Global)
-	return true; // for the sake of startup code
+
+	//Gets the entity at the specified index
+	Entity* oEnt = nullptr;
+	oEnt = m_pEntityMngr->GetEntity(a_uRBIndex);
+
+	//Gets the rigid body of the entity (if it exists)
+	RigidBody* oRB = nullptr;
+	if (oEnt) oRB = oEnt->GetRigidBody();
+
+	//if the rigid body exists, checks if it is colliding with the current octant
+	if (oRB)
+	{
+		vector3 oMin = oRB->GetMinGlobal();
+		vector3 oMax = oRB->GetMaxGlobal();
+
+		vector3 tMax = m_v3Max;
+		vector3 tMin = m_v3Min;
+
+		if (tMax.x < oMin.x) return false;
+		if (tMin.x > oMax.x) return false;
+
+		if (tMax.y < oMin.y) return false;
+		if (tMin.y > oMax.y) return false;
+
+		if (tMax.z < oMin.z) return false;
+		if (tMin.z > oMax.z) return false;
+
+		return true;
+	}
+
+	return false; //returns false if the rigid body does not exist
 }
 void Octant::Display(uint a_nIndex, vector3 a_v3Color)
 {
 	// Display the specified octant
+
+	//Base case of recursive call - when the current octant has the specified index, displays the octant and returns
+	if (m_uID == a_nIndex)
+	{
+		m_pModelMngr->AddWireCubeToRenderList(glm::translate(IDENTITY_M4, m_v3Center) *
+			glm::scale(vector3(m_fSize)), a_v3Color);
+
+		return;
+	}
+
+	//recursive portion - loops through children and calls their display method and passes in the index that was passed down
+	for (uint i = 0; i < m_uChildren; i++)
+	{
+		m_pChild[i]->Display(a_nIndex);
+	}
 }
 void Octant::Display(vector3 a_v3Color)
 {
 	//this is meant to be a recursive method, in starter code will only display the root
 	//even if other objects are created
+
+	//recursive portion - loops through childrern and calls display, passing in the color that was passed into this method
+	for (uint i = 0; i < m_uChildren; i++)
+	{
+		m_pChild[i]->Display(a_v3Color);
+	}
+
+	//once all children have displayed, displays the current octant
 	m_pModelMngr->AddWireCubeToRenderList(glm::translate(IDENTITY_M4, m_v3Center) *
 		glm::scale(vector3(m_fSize)), a_v3Color);
 }
@@ -74,19 +153,99 @@ void Octant::Subdivide(void)
 	if (m_uChildren != 0)
 		return;
 
+	m_uChildren = 8; //sets amount of children to 8
+
 	//Subdivide the space and allocate 8 children
+	float childSize = this->m_fSize / 2.0f;
+	float offset = childSize / 2.0f;
+
+	//Child 1 - Top Right Front
+	vector3 childCenter = vector3(m_v3Center.x + offset, m_v3Center.y + offset, m_v3Center.z + offset);
+	m_pChild[0] = new Octant(childCenter, childSize);
+	
+	//Child 2 - Top Right Back
+	childCenter.z -= childSize;
+	m_pChild[1] = new Octant(childCenter, childSize);
+
+	//Child 3 - Top Left Back
+	childCenter.x -= childSize;
+	m_pChild[2] = new Octant(childCenter, childSize);
+
+	//Child 4 - Top Left Front
+	childCenter.z += childSize;
+	m_pChild[3] = new Octant(childCenter, childSize);
+
+	//Child 5 - Bottom Right Front
+	childCenter.y -= childSize;
+	childCenter.x += childSize;
+	m_pChild[4] = new Octant(childCenter, childSize);
+
+	//Child 6 - Bottom Right Back
+	childCenter.z -= childSize;
+	m_pChild[5] = new Octant(childCenter, childSize);
+
+	//Child 7 - Bottom Left Back
+	childCenter.x -= childSize;
+	m_pChild[6] = new Octant(childCenter, childSize);
+
+	//Child 8 - Bottom Left Front
+	childCenter.z += childSize;
+	m_pChild[7] = new Octant(childCenter, childSize);
+
+	//loops through all children assigning root, parent, and the level
+	for (uint i = 0; i < 8; i++)
+	{
+		m_pChild[i]->m_pRoot = m_pRoot;
+		m_pChild[i]->m_pParent = this;
+		m_pChild[i]->m_uLevel = m_uLevel + 1;
+
+		//checks if the child contains more than the ideal entity count (that's why it is plus 1). if it does, child subdivides
+		if (m_pChild[i]->ContainsAtLeast(m_uIdealEntityCount + 1))
+		{
+			m_pChild[i]->Subdivide();
+		}
+	}
 }
 bool Octant::ContainsAtLeast(uint a_nEntities)
 {
 	//You need to check how many entity objects live within this octant
-	return false; //return something for the sake of start up code
+
+	uint count = 0; //count of entities
+
+	//loops through all entities - if an entity is colliding increments count, if amount of entities equals to the passed amount, returns true
+	for (uint i = 0; i < m_pEntityMngr->GetEntityCount(); i++)
+	{
+		if (IsColliding(i)) count++;
+
+		if (count >= a_nEntities) return true;
+	}
+
+	return false; //returns false if amount of entities in current octant is less than the passed amount
 }
 void Octant::AssignIDtoEntity(void)
 {
 	//Recursive method
 	//Have to traverse the tree and make sure to tell the entity manager
 	//what octant (space) each object is at
-	m_pEntityMngr->AddDimension(0, m_uID);//example only, take the first entity and tell it its on this space
+
+	//recursive portion - calls this method for all children of current octant
+	for (uint i = 0; i < m_uChildren; i++)
+	{
+		m_pChild[i]->AssignIDtoEntity();
+	}
+
+	//if the octant doesn't have any children - checks for colliding entities, adds their IDs from EntityManager to list and assigns them to current octant
+	if (m_uChildren == 0)
+	{
+		for (uint i = 0; i < m_pEntityMngr->GetEntityCount(); i++)
+		{
+			if (IsColliding(i))
+			{
+				m_EntityList.push_back(i);
+				m_pEntityMngr->AddDimension(i, m_uID);
+			}
+		}
+	}
 }
 //-------------------------------------------------------------------------------------------------------------------
 // You can assume the following is fine and does not need changes, you may add onto it but the code is fine as is
