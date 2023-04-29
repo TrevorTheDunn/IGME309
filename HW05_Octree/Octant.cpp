@@ -26,17 +26,33 @@ Octant::Octant(uint a_nMaxLevel, uint a_nIdealEntityCount)
 
 	//The following is a made-up size, you need to make sure it is measuring all the object boxes in the world
 	std::vector<vector3> lMinMax;
-	lMinMax.push_back(vector3(-50.0f));
-	lMinMax.push_back(vector3(25.0f));
 
+	for (uint i = 0; i < m_pEntityMngr->GetEntityCount(); i++)
+	{
+		Entity* pEntity = nullptr;
+		pEntity = m_pEntityMngr->GetEntity(i);
 
+		RigidBody* pRB = nullptr;
+		if (pEntity)
+			pRB = pEntity->GetRigidBody();
+
+		vector3 v3Max;
+		vector3 v3Min;
+		if (pRB)
+		{
+			v3Max = pRB->GetMaxGlobal();
+			v3Min = pRB->GetMaxGlobal();
+			lMinMax.push_back(v3Max);
+			lMinMax.push_back(v3Min);
+		}
+	}
 	
 	RigidBody pRigidBody = RigidBody(lMinMax);
 
-
 	//The following will set up the values of the octant, make sure the are right, the rigid body at start
 	//is NOT fine, it has made-up values
-	m_fSize = pRigidBody.GetHalfWidth().x * 2.0f;
+
+	m_fSize = pRigidBody.GetHalfWidth().x;
 	m_v3Center = pRigidBody.GetCenterLocal();
 	m_v3Min = m_v3Center - pRigidBody.GetHalfWidth();
 	m_v3Max = m_v3Center + pRigidBody.GetHalfWidth();
@@ -51,11 +67,26 @@ bool Octant::IsColliding(uint a_uRBIndex)
 	//If the index given is larger than the number of elements in the bounding object there is no collision
 	//As the Octree will never rotate or scale this collision is as easy as an Axis Alligned Bounding Box
 	//Get all vectors in global space (the octant ones are already in Global)
+
+	int numObjects = m_pEntityMngr->GetEntityCount();
+	if (a_uRBIndex >= numObjects) return false;
+
+	Entity* otherEntity = nullptr;
+	otherEntity = m_pEntityMngr->GetEntity(a_uRBIndex);
+
+	RigidBody* otherRB = nullptr;
+	if (otherEntity)
+		otherRB = otherEntity->GetRigidBody();
+
+	//INSERT AABB CODE HERE
+
 	return true; // for the sake of startup code
 }
 void Octant::Display(uint a_nIndex, vector3 a_v3Color)
 {
 	// Display the specified octant
+	m_pModelMngr->AddWireCubeToRenderList(glm::translate(IDENTITY_M4, m_v3Center) *
+		glm::scale(vector3(m_fSize)), a_v3Color);
 }
 void Octant::Display(vector3 a_v3Color)
 {
@@ -64,7 +95,7 @@ void Octant::Display(vector3 a_v3Color)
 	m_pModelMngr->AddWireCubeToRenderList(glm::translate(IDENTITY_M4, m_v3Center) *
 		glm::scale(vector3(m_fSize)), a_v3Color);
 }
-void Octant::Subdivide(void)
+void Octant::Subdivide(void) //subdivide works on children, children are pointers, make sure to use new keyword
 {
 	//If this node has reach the maximum depth return without changes
 	if (m_uLevel >= m_uMaxLevel)
@@ -75,6 +106,30 @@ void Octant::Subdivide(void)
 		return;
 
 	//Subdivide the space and allocate 8 children
+	float childSize = this->m_fSize / 2.0f;
+	vector3 m_v3ChildCenter = vector3(this->m_v3Center.x + childSize/2, this->m_v3Center.y + childSize/2, this->m_v3Center.z + childSize/2);
+	m_pChild[0] = new Octant(m_v3ChildCenter, childSize);
+
+	m_v3ChildCenter = vector3(this->m_v3Center.x + childSize/2, this->m_v3Center.y + childSize/2, this->m_v3Center.z - childSize/2);
+	m_pChild[1] = new Octant(m_v3ChildCenter, childSize);
+
+	m_v3ChildCenter = vector3(this->m_v3Center.x - childSize/2, this->m_v3Center.y + childSize/2, this->m_v3Center.z - childSize/2);
+	m_pChild[2] = new Octant(m_v3ChildCenter, childSize);
+
+	m_v3ChildCenter = vector3(this->m_v3Center.x - childSize/2, this->m_v3Center.y + childSize/2, this->m_v3Center.z + childSize/2);
+	m_pChild[3] = new Octant(m_v3ChildCenter, childSize);
+
+	m_v3ChildCenter = vector3(this->m_v3Center.x + childSize/2, this->m_v3Center.y - childSize/2, this->m_v3Center.z + childSize/2);
+	m_pChild[4] = new Octant(m_v3ChildCenter, childSize);
+
+	m_v3ChildCenter = vector3(this->m_v3Center.x + childSize/2, this->m_v3Center.y - childSize/2, this->m_v3Center.z - childSize/2);
+	m_pChild[5] = new Octant(m_v3ChildCenter, childSize);
+
+	m_v3ChildCenter = vector3(this->m_v3Center.x - childSize/2, this->m_v3Center.y - childSize/2, this->m_v3Center.z - childSize/2);
+	m_pChild[6] = new Octant(m_v3ChildCenter, childSize);
+
+	m_v3ChildCenter = vector3(this->m_v3Center.x - childSize/2, this->m_v3Center.y - childSize/2, this->m_v3Center.z + childSize/2);
+	m_pChild[7] = new Octant(m_v3ChildCenter, childSize);
 }
 bool Octant::ContainsAtLeast(uint a_nEntities)
 {
